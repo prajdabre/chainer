@@ -179,7 +179,8 @@ def to_gpu(array, device=None, stream=None):
     Args:
         array: Array to be sent to GPU.
         device: Device specifier.
-        stream (cupy.cuda.Stream): CUDA stream.
+        stream (cupy.cuda.Stream): CUDA stream. If not ``None``, the copy runs
+            asynchronously.
 
     Returns:
         cupy.ndarray: Array on GPU.
@@ -190,10 +191,21 @@ def to_gpu(array, device=None, stream=None):
 
     """
     check_cuda_available()
-    assert stream is None  # TODO(beam2d): FIX IT
     with get_device(device):
         dev_id = int(get_device(array))
-        if dev_id != -1 and dev_id != cupy.cuda.device.get_device_id():
+        if dev_id == cupy.cuda.device.get_device_id():
+            return cupy.array(array)
+
+        if stream is not None:
+            src = array.copy()
+            ret = cupy.empty_like(src)
+            ret.set(src, stream)
+
+            # to hold a reference to the end of the asynchronously memcpy
+            stream.add_callback(lambda *x: None, (src, ret))
+            return ret
+
+        if dev_id != -1:
             # Need to make a copy when an array is copied to another device
             return cupy.array(array, copy=True)
         else:
