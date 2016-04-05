@@ -175,6 +175,10 @@ contrastive
 ~~~~~~~~~~~
 .. autofunction:: contrastive
 
+crf1d
+~~~~~
+.. autofunction:: crf1d
+
 cross_covariance
 ~~~~~~~~~~~~~~~~
 .. autofunction:: cross_covariance
